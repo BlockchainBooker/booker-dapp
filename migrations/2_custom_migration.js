@@ -1,5 +1,5 @@
-var MyContract = artifacts.require("./MyLibrary.sol");
+var MyLibrary = artifacts.require("./MyLibrary.sol");
 
-module.exports = function(deployer) {
+module.exports = function (deployer) {
   deployer.deploy(MyLibrary);
 };
