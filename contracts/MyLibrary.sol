@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./Owned.sol";
 
 contract MyLibrary is Owned {
-    mapping(address => Customer) customers;
+    mapping(address => Customer) public customers;
     mapping(string => Book) public books;
     string[] public booksIds;
 
@@ -23,6 +23,9 @@ contract MyLibrary is Owned {
 
     event CustomerRegistered(address customer);
     event CustomerRegistrationFailed(address customer);
+
+    event BookBuyCompleted(address customer, string bookId);
+    event BookBuyFailed(address customer, string bookId);
 
     event BookRegistered(string bookId);
     event BookDeregistered(string bookId);
@@ -66,11 +69,15 @@ contract MyLibrary is Owned {
         return false;
     }
 
-    function registerCustomer(address _address) private returns (bool success) {
+    function registerCustomer(address _address, string calldata bookId)
+        private
+        returns (bool success)
+    {
         if (_address != address(0)) {
             Customer memory customer =
                 Customer({adr: _address, ownedBooks: new string[](0)});
             customers[_address] = customer;
+            customers[_address].ownedBooks.push(bookId);
             emit CustomerRegistered(_address);
             return true;
         }
@@ -78,64 +85,50 @@ contract MyLibrary is Owned {
         return false;
     }
 
-    function getMyProfile()
+    function getOwnedBooks()
         public
-        returns (address adr, string[] memory ownedBooks)
+        view
+        returns (bool exists, string[] memory ownedBooks)
     {
         if (customers[msg.sender].adr != address(0)) {
             // exista deja
-            return (
-                customers[msg.sender].adr,
-                customers[msg.sender].ownedBooks
-            );
-        } else {
-            if (registerCustomer(msg.sender)) {
-                return (
-                    customers[msg.sender].adr,
-                    customers[msg.sender].ownedBooks
-                );
-            }
+            return (true, customers[msg.sender].ownedBooks);
         }
+        return (false, customers[msg.sender].ownedBooks);
     }
 
-    // function insertProductIntoCart(uint256 id)
-    //     returns (bool success, uint256 pos_in_prod_mapping)
-    // {
-    //     Customer cust = customers[msg.sender];
-    //     Product prod = products[id];
-    //     uint256 prods_prev_len = cust.cart.products.length;
-    //     cust.cart.products.push(prod.id);
-    //     uint256 current_sum = cust.cart.completeSum;
-    //     cust.cart.completeSum = safeAdd(current_sum, prod.price);
-    //     if (cust.cart.products.length > prods_prev_len) {
-    //         CartProductInserted(
-    //             msg.sender,
-    //             id,
-    //             prod.price,
-    //             cust.cart.completeSum
-    //         );
-    //         return (true, cust.cart.products.length - 1);
-    //     }
-    //     CartProductInsertionFailed(msg.sender, id);
-    //     return (false, 0);
-    // }
+    function buyBook(string calldata id)
+        public
+        payable
+        returns (
+            bool success,
+            uint256 aft,
+            uint256 before,
+            Customer memory cust
+        )
+    {
+        if (books[id].default_amount > 0) {
+            before = books[id].default_amount;
+            books[id].default_amount--;
 
-    // function checkoutCart() returns (bool success) {
-    //     Customer customer = customers[msg.sender];
-    //     uint256 paymentSum = customer.cart.completeSum;
-    //     if (
-    //         (customer.balance >= paymentSum) &&
-    //         customer.cart.products.length > 0
-    //     ) {
-    //         customer.balance -= paymentSum;
-    //         customer.cart = Cart(new uint256[](0), 0);
-    //         store_balance += paymentSum;
-    //         CartCheckoutCompleted(msg.sender, paymentSum);
-    //         return true;
-    //     }
-    //     CartCheckoutFailed(msg.sender, customer.balance, paymentSum);
-    //     return false;
-    // }
+            if (customers[msg.sender].adr != address(0)) {
+                // exista deja
+                registerCustomer(msg.sender, id);
+            } else {
+                customers[msg.sender].ownedBooks.push(id);
+            }
+
+            emit BookBuyCompleted(msg.sender, id);
+            return (
+                true,
+                books[id].default_amount,
+                before,
+                customers[msg.sender]
+            );
+        }
+        emit BookBuyFailed(msg.sender, id);
+        return (false, 0, 0, customers[msg.sender]);
+    }
 
     function getBook(string memory id)
         public
@@ -190,7 +183,7 @@ contract MyLibrary is Owned {
     }
 
     function compareStrings(string memory a, string memory b)
-        private
+        public
         pure
         returns (bool)
     {

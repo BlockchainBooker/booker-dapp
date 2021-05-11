@@ -1231,15 +1231,15 @@
     "version": "0.8.0+commit.c7dfd78e.Emscripten.clang"
   },
   "networks": {
-    "5777": {
+    "1620733513753": {
       "events": {},
       "links": {},
-      "address": "0x95fa0B6d6fE78e79B63Fc17dAe66f0F229f99c91",
-      "transactionHash": "0x7474ca16aeda9c14236001ac84b007815f4fec97475e08092f87f0c29ed70dcc"
+      "address": "0x0bcE00eD57AFF1811bCEa4F9743343dD644e435d",
+      "transactionHash": "0x9f7a98ef61194e72568cdd0af6f7b4d43243bc5976e9faf36efaef1d7971e15b"
     }
   },
   "schemaVersion": "3.4.0",
-  "updatedAt": "2021-05-09T14:19:18.872Z",
+  "updatedAt": "2021-05-11T14:22:04.821Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
